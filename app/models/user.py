@@ -11,7 +11,8 @@ from app.models.notification import Notification
 # 用户关注关系表
 followers = db.Table('followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+    db.Column('followed_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('timestamp', db.DateTime, default=datetime.utcnow)
 )
 
 # 用户收藏文章关系表
@@ -56,12 +57,14 @@ class User(UserMixin, db.Model):
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     last_notification_read_time = db.Column(db.DateTime)
     
-    # 关注关系
-    followed = db.relationship(
+    # 用户关注的人
+    following = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
-        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
+        backref=db.backref('followers', lazy='dynamic'),
+        lazy='dynamic'
+    )
     
     # 收藏关系
     favorite_posts = db.relationship('Post', 
@@ -80,25 +83,30 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
     def follow(self, user):
+        """关注用户"""
         if not self.is_following(user):
-            self.followed.append(user)
-            return self
+            self.following.append(user)
+            db.session.commit()
     
     def unfollow(self, user):
+        """取消关注用户"""
         if self.is_following(user):
-            self.followed.remove(user)
-            return self
+            self.following.remove(user)
+            db.session.commit()
     
     def is_following(self, user):
-        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
+        """判断是否关注了某用户"""
+        if user.id is None:
+            return False
+        return self.following.filter(
+            followers.c.followed_id == user.id).count() > 0
     
-    def followed_posts(self):
+    def get_following_posts(self):
+        """获取关注用户的文章"""
         from app.models.post import Post
-        followed = Post.query.join(
-            followers, (followers.c.followed_id == Post.user_id)).filter(
-                followers.c.follower_id == self.id)
-        own = Post.query.filter_by(user_id=self.id)
-        return followed.union(own).order_by(Post.created_at.desc())
+        return Post.query.join(
+            followers, (followers.c.followed_id == Post.author_id)
+        ).filter(followers.c.follower_id == self.id)
     
     def favorite_post(self, post):
         """收藏文章"""
@@ -166,6 +174,16 @@ class User(UserMixin, db.Model):
         notification = Notification(message=message, type=type, user=self)
         db.session.add(notification)
         return notification
+
+    @property
+    def following_count(self):
+        """关注数"""
+        return self.following.count()
+
+    @property
+    def followers_count(self):
+        """粉丝数"""
+        return self.followers.count()
 
 @login_manager.user_loader
 def load_user(id):

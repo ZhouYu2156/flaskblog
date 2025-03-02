@@ -45,6 +45,16 @@
             class="list-group-item list-group-item-action {% if request.endpoint == 'user.profile' %}active{% endif %}">
             <i class="fas fa-user-cog me-2"></i>个人资料
           </a>
+          <a
+            href="{{ url_for('user.following') }}"
+            class="list-group-item list-group-item-action {% if request.endpoint == 'user.following' %}active{% endif %}">
+            <i class="fas fa-user-friends me-2"></i>我的关注
+          </a>
+          <a
+            href="{{ url_for('user.followers') }}"
+            class="list-group-item list-group-item-action {% if request.endpoint == 'user.followers' %}active{% endif %}">
+            <i class="fas fa-users me-2"></i>我的粉丝
+          </a>
           <a class="list-group-item list-group-item-action" href="{{ url_for('user.my_categories') }}">
             <i class="fas fa-folder me-2"></i> 分类管理
           </a>

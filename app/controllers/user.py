@@ -16,6 +16,10 @@ from datetime import datetime
 
 user_bp = Blueprint('user', __name__)
 
+def redirect_back():
+    """返回上一页面，如果没有则返回首页"""
+    return redirect(request.referrer or url_for('blog.index'))
+
 @user_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -73,13 +77,14 @@ def favorite(post_id):
 @user_bp.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
 def follow(user_id):
+    """关注/取消关注用户"""
     user = User.query.get_or_404(user_id)
     if current_user.is_following(user):
-        flash('你已经关注了这个用户', 'info')
+        current_user.unfollow(user)
+        flash('已取消关注', 'success')
     else:
         current_user.follow(user)
-        db.session.commit()
-        flash('成功关注用户', 'success')
+        flash('关注成功', 'success')
     return redirect(request.referrer or url_for('blog.index'))
 
 @user_bp.route('/unfollow/<int:user_id>', methods=['POST'])
@@ -97,20 +102,26 @@ def unfollow(user_id):
 @user_bp.route('/following')
 @login_required
 def following():
+    """我的关注页面"""
     page = request.args.get('page', 1, type=int)
-    users = current_user.followed.paginate(
-        page=page, per_page=20, error_out=False)
-    
-    return render_template('front/user/following.html', title='我的关注', users=users)
+    pagination = current_user.following.paginate(
+        page=page,
+        per_page=10,  # 直接使用固定值
+        error_out=False
+    )
+    return render_template('front/user/following.html', users=pagination)
 
 @user_bp.route('/followers')
 @login_required
 def followers():
+    """我的粉丝页面"""
     page = request.args.get('page', 1, type=int)
-    users = current_user.followers.paginate(
-        page=page, per_page=20, error_out=False)
-    
-    return render_template('front/user/followers.html', title='我的粉丝', users=users)
+    pagination = current_user.followers.paginate(
+        page=page,
+        per_page=10,  # 直接使用固定值
+        error_out=False
+    )
+    return render_template('front/user/followers.html', users=pagination)
 
 @user_bp.route('/<username>/posts')
 def user_posts(username):

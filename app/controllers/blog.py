@@ -176,17 +176,20 @@ def search():
                           query=query,
                           posts=posts)
 
-@blog_bp.route('/user/<username>')
+@blog_bp.route('/user/<username>/posts')
 def user_posts(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
-    pagination = Post.query.filter_by(author=user, is_published=True).order_by(
+    pagination = Post.query.filter_by(
+        author=user,
+        is_published=True
+    ).order_by(
         Post.created_at.desc()
     ).paginate(page=page, per_page=10)
-    posts = pagination.items
+    
     return render_template('front/user/posts.html',
                          user=user,
-                         posts=posts,
+                         posts=pagination,  # 注意这里，直接传递 pagination 对象
                          pagination=pagination)
 
 @blog_bp.route('/comment/<int:id>/delete', methods=['POST'])
