@@ -1,4 +1,5 @@
-{% extends "front/user/base.html" %} {% block user_content %}
+{% extends "front/user/base.html" %}{% block title %}{{ '编辑文章' if post else '写文章' }}{% endblock %} {% block
+user_content %}
 <div class="card">
   <div class="card-header">
     <h5 class="card-title mb-0">{{ '编辑文章' if post else '写文章' }}</h5>

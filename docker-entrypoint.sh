@@ -5,26 +5,21 @@ mkdir -p /myblog/instance
 chown -R www-data:www-data /myblog/instance
 chmod 755 /myblog/instance
 
-# 初始化数据库迁移（如果不存在）
-if [ ! -d "migrations" ]; then
-    echo "Initializing database migrations..."
-    flask db init
-fi
+# 等待数据库就绪
+echo "Initializing database..."
 
-# 生成迁移文件
-echo "Generating migration..."
-flask db migrate -m "Initial migration"
-
-# 应用迁移
-echo "Applying migration..."
+# 初始化数据库
+flask db init || true  # 如果已经初始化则跳过
+flask db migrate -m "Initial migration" || true
 flask db upgrade
 
-# 创建管理员账号（自动模式）
+# 自动创建管理员账号
 echo "Creating admin account..."
 flask create-admin --auto
 
-# 初始化测试数据（可选）
-# flask init-data
+# 生成测试数据（可选）
+echo "Generating test data..."
+flask init-data
 
 # 启动应用
 echo "Starting Flask application..."

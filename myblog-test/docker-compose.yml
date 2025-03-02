@@ -8,16 +8,18 @@ services:
     volumes:
       - myblog-data:/myblog/instance
       - myblog-uploads:/myblog/app/static/uploads
+      - ./migrations:/myblog/migrations
     environment:
       - FLASK_APP=run.py
       - FLASK_ENV=production
       - FLASK_DEBUG=0
-      - SECRET_KEY=dsagdsahjxkllzdsa54ds5a144fs484z65g44a21cx
+      - SECRET_KEY=your-secret-key
       - MAIL_SERVER=smtp.qq.com
       - MAIL_PORT=587
       - MAIL_USE_TLS=true
       - MAIL_USERNAME=1043744584@qq.com
       - MAIL_PASSWORD=idyvggfovuwybfid
+      - DATABASE_URL=sqlite:////myblog/instance/blog.db
     restart: always
 
   redis:
